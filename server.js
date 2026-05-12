@@ -4,7 +4,14 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Request Logger
@@ -23,12 +30,24 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Firebase Admin SDK Initialization
-const serviceAccount = require("./serviceAccountKey.json");
+let serviceAccount;
 
 try {
-  if (serviceAccount.project_id === "YOUR_PROJECT_ID") {
-    throw new Error("PLACEHOLDER_DETECTED: Please replace backend/serviceAccountKey.json with your real Firebase Service Account key.");
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    try {
+      serviceAccount = require("./serviceAccountKey.json");
+    } catch (requireError) {
+      console.warn("⚠️ Warning: serviceAccountKey.json not found and FIREBASE_SERVICE_ACCOUNT env var is missing.");
+      serviceAccount = { project_id: "MISSING" }; // Placeholder to trigger the next error block
+    }
   }
+
+  if (serviceAccount.project_id === "YOUR_PROJECT_ID" || serviceAccount.project_id === "MISSING") {
+    throw new Error("FIREBASE_CONFIG_MISSING: Please provide FIREBASE_SERVICE_ACCOUNT env var or serviceAccountKey.json file.");
+  }
+  
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
@@ -36,7 +55,7 @@ try {
 } catch (error) {
   console.error("\x1b[31m%s\x1b[0m", "--- FIREBASE INITIALIZATION ERROR ---");
   console.error("\x1b[33m%s\x1b[0m", error.message);
-  console.error("Backend will run but database features will fail until a valid serviceAccountKey.json is provided.");
+  console.error("Backend will run but database features will fail until FIREBASE_SERVICE_ACCOUNT or serviceAccountKey.json is provided.");
 }
 
 let db = null;
