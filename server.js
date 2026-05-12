@@ -222,11 +222,15 @@ app.post('/api/auth/change-password', async (req, res) => {
     // Default password if none exists in DB yet
     const currentPassword = doc.exists ? doc.data().password : 'admin';
 
+    console.log(`[AUTH] Password Change Attempt: Received Old: "${oldPassword}", Current in DB: "${currentPassword}"`);
+
     if (currentPassword !== oldPassword) {
+      console.warn(`[AUTH] Password mismatch for change-password request.`);
       return res.status(400).json({ error: "Incorrect Old Password" });
     }
 
     await adminRef.set({ password: newPassword }, { merge: true });
+    console.log(`[AUTH] Password updated successfully in Firestore.`);
     res.status(200).json({ success: true, message: "Password updated successfully!" });
   } catch (error) {
     console.error("Change Password Error:", error);
