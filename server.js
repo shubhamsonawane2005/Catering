@@ -47,7 +47,7 @@ try {
   if (serviceAccount.project_id === "YOUR_PROJECT_ID" || serviceAccount.project_id === "MISSING") {
     throw new Error("FIREBASE_CONFIG_MISSING: Please provide FIREBASE_SERVICE_ACCOUNT env var or serviceAccountKey.json file.");
   }
-  
+
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
@@ -69,7 +69,7 @@ if (admin.apps.length > 0) {
 app.post('/api/attendance/record', async (req, res) => {
   if (!db) return res.status(503).json({ error: "Database not initialized. Please provide Service Account Key." });
   const { employee_id, date } = req.body;
-  
+
   const today = new Date().toISOString().split('T')[0];
   if (date > today) return res.status(400).json({ error: "Cannot record attendance for future dates." });
   const docId = `${employee_id}_${date}`;
@@ -104,7 +104,7 @@ app.post('/api/employees/quick-add', async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     if (date > today) return res.status(400).json({ error: "Cannot record attendance for future dates." });
   }
-  
+
   try {
     // Save employee
     const empRef = await db.collection('employees').add({
@@ -139,7 +139,7 @@ app.get('/api/employees/search', async (req, res) => {
   if (!db) return res.status(503).json({ error: "Database not initialized." });
   const { q } = req.query;
   if (!q) return res.status(200).json({ success: true, data: [] });
-  
+
   try {
     const snapshot = await db.collection('employees')
       .orderBy('name')
@@ -147,7 +147,7 @@ app.get('/api/employees/search', async (req, res) => {
       .endAt(q + '\uf8ff')
       .limit(5)
       .get();
-    
+
     const results = [];
     snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
     res.status(200).json({ success: true, data: results });
@@ -165,7 +165,7 @@ app.get('/api/attendance/unpaid/:employeeId', async (req, res) => {
       .where('employee_id', '==', employeeId)
       .where('status', '==', 'unpaid')
       .get();
-    
+
     const records = [];
     snapshot.forEach(doc => records.push({ id: doc.id, ...doc.data() }));
     res.status(200).json({ success: true, data: records });
@@ -226,20 +226,20 @@ app.post('/api/auth/change-password', async (req, res) => {
 
     if (currentPassword !== oldPassword) {
       console.warn(`[AUTH] Password mismatch for change-password request.`);
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: "Incorrect Old Password",
         message: "The old password you entered is incorrect.",
-        payload: null 
+        payload: {}
       });
     }
 
     await adminRef.set({ password: newPassword }, { merge: true });
     console.log(`[AUTH] Password updated successfully in Firestore.`);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: "Password updated successfully!",
-      payload: { updated: true } 
+      payload: { updated: true }
     });
   } catch (error) {
     console.error("Change Password Error:", error);
