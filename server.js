@@ -224,7 +224,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 
     console.log(`[AUTH] Password Change Attempt: Received Old: "${oldPassword}", Current in DB: "${currentPassword}"`);
 
-    if (currentPassword !== oldPassword) {
+    if (currentPassword.trim() !== oldPassword.trim()) {
       console.warn(`[AUTH] Password mismatch for change-password request.`);
       return res.status(400).json({
         success: false,
