@@ -226,12 +226,21 @@ app.post('/api/auth/change-password', async (req, res) => {
 
     if (currentPassword !== oldPassword) {
       console.warn(`[AUTH] Password mismatch for change-password request.`);
-      return res.status(400).json({ error: "Incorrect Old Password" });
+      return res.status(400).json({ 
+        success: false, 
+        error: "Incorrect Old Password",
+        message: "The old password you entered is incorrect.",
+        payload: null 
+      });
     }
 
     await adminRef.set({ password: newPassword }, { merge: true });
     console.log(`[AUTH] Password updated successfully in Firestore.`);
-    res.status(200).json({ success: true, message: "Password updated successfully!" });
+    res.status(200).json({ 
+      success: true, 
+      message: "Password updated successfully!",
+      payload: { updated: true } 
+    });
   } catch (error) {
     console.error("Change Password Error:", error);
     res.status(500).json({ error: error.message });
